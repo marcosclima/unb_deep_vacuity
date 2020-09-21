@@ -1,5 +1,7 @@
 # Hiding data
 unb_deep_vacurity/resources/data/*.json
+unb_deep_vacuity/resources/data/dic_ind_0_0.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -138,3 +140,4 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+.gitignore
