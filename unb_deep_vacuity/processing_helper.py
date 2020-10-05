@@ -23,8 +23,7 @@ def json_to_pd(r_path):
     return json_df
 # Entrada: Caminho até o arquivo e nome do arquivo
 # Saída: hdf/dataframe com vetores de frequência, risco e split
-# unidecode para remover caracteres especiais e acentos
-# Remover tags HTML, preservar conteúdo - recomendação r'\<{1,15}\>'
+# 
 
 
 def text_to_tfidf_vectors(filename: str, path_to_folder=None):
@@ -45,7 +44,6 @@ def text_to_tfidf_vectors(filename: str, path_to_folder=None):
 
     data_df = json_to_pd(path_to_file)
 
-    print(data_df.head())
 
     # Renaming the columns
     # Let's start uppercasing all column names and target variable values
@@ -63,6 +61,12 @@ def text_to_tfidf_vectors(filename: str, path_to_folder=None):
     stopwords_set = set(STOP_WORDS).union(
         set(stopwords.words('portuguese'))).union(
             set(['anos', 'ano', 'dia', 'dias', 'nº', 'n°']))
+
+    # Removing HTML
+    data_df['TXT'] = data_df['TXT'].str.replace(r'<.*?>', '')
+    # Removing accents and symbols
+    data_df['TXT'] = data_df['TXT'].str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
+    data_df.head()
 
     # Lemmatizing and stemming
     print("This is the stopword list: ", sorted(list(stopwords_set)))
@@ -116,7 +120,7 @@ def text_to_tfidf_vectors(filename: str, path_to_folder=None):
         for token in doc:
             if not token.ent_type_:
                 processed_doc.append(token)
-            elif not token.ent_type_ in entity_unwanted_types:
+            elif token.ent_type_ not in entity_unwanted_types:
                 processed_doc.append(token)
                 entities_obs.append((token.text, token.ent_type_))
             
