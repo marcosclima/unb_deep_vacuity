@@ -7,6 +7,8 @@ import spacy
 from spacy.lang.pt.stop_words import STOP_WORDS
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from scipy.sparse import vstack
+
 
 
 def json_to_pd(r_path):
@@ -64,9 +66,6 @@ def text_to_tfidf_vectors(filename: str, path_to_folder=None):
 
     # Removing HTML
     data_df['TXT'] = data_df['TXT'].str.replace(r'<.*?>', '')
-    # Removing accents and symbols
-    data_df['TXT'] = data_df['TXT'].str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
-    data_df.head()
 
     # Lemmatizing and stemming
     print("This is the stopword list: ", sorted(list(stopwords_set)))
@@ -156,6 +155,12 @@ def text_to_tfidf_vectors(filename: str, path_to_folder=None):
     data_df = data_df.drop(columns=['TOKENS']).dropna()
     data_df[TARGET_VARIABLE] = data_df[TARGET_VARIABLE].apply(lambda x: str(x))
     print(data_df.info())
+
+    # Removing accents and symbols
+    data_df['TXT'] = data_df['TXT'].str.normalize(
+        'NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
+    print(data_df.info())
+
     ''' Best parameter using GridSearch (CV score=0.535): 
     {'tfidf__norm': 'l2', 'tfidf__smooth_idf': False, 'tfidf__sublinear_tf': False, 'tfidf__use_idf': True,
     'vect__max_df': 0.2, 'vect__max_features': None, 'vect__min_df': 0.0006, 'vect__ngram_range': (1, 3)}
@@ -166,10 +171,25 @@ def text_to_tfidf_vectors(filename: str, path_to_folder=None):
     tfidf_transformer = TfidfTransformer(
         norm='l2', use_idf=True, sublinear_tf=False)
 
+    # First let's split train and test data
+    train_mask = data_df['SPLIT'] == 'train'
+    test_mask = data_df['SPLIT'] == 'test'
+
+    train_df = data_df[train_mask]
+    test_df = data_df[test_mask]
     ''' Let's transform the lemmatized documents into count vectors '''
-    count_vectors = count_vectorizer.fit_transform(
-        data_df['PROCESSED_DOC'])
+    train_count_vectors = count_vectorizer.fit_transform(
+        train_df['PROCESSED_DOC'])
+    test_count_vectors = count_vectorizer.transform(
+        test_df['PROCESSED_DOC'])
 
     ''' Then use those count vectors to generate frequency vectors '''
-    frequency_vectors = tfidf_transformer.fit_transform(count_vectors)
+    train_frequency_vectors = tfidf_transformer.fit_transform(
+        train_count_vectors)
+    test_frequency_vectors = tfidf_transformer.transform(
+        test_count_vectors)
+
+    frequency_vectors = vstack((
+        train_frequency_vectors, test_frequency_vectors))
+
     return frequency_vectors
