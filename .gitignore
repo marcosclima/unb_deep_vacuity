@@ -1,6 +1,7 @@
 # Hiding data
 unb_deep_vacuity/resources/data/*
 unb_deep_vacuity/main_2.ipynb
+unb_deep_vacuity/.metaflow/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
